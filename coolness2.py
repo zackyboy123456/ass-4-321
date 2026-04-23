@@ -30,6 +30,7 @@ def crack(entries, dictionary,n):
         start_time = time.time()
 
         queue = ctx.Queue()
+        found = ctx.Event()
         procs = []
 
         # start processes
@@ -43,6 +44,8 @@ def crack(entries, dictionary,n):
             result = queue.get()
             if result:
                 password = result
+                found.set()
+                break
 
         # wait for all processes to finish
         for p in procs:
@@ -54,7 +57,26 @@ def crack(entries, dictionary,n):
     return results
 
 if __name__ == "__main__":
+    print("Loading shadow file from shadow,txt...")
     entries = load_shadow_file("shadow.txt")
+
+    for user, hash_bytes in entries:
+        hash_str = hash_bytes.decode()
+
+        parts = hash_str.split("$")
+        algorithm = parts[1]
+        workfactor = parts[2]
+        salt_hash = parts[3]
+
+        salt = salt_hash[:22]
+        hash_only = salt_hash[22:]
+
+        print("User:" + str(user))
+        print(f"Algorithm: " + str(algorithm))
+        print(f"Workfactor: " + str(workfactor))
+        print(f"Salt:" + str(salt))
+        print(f"Hash value: " + str(hash_only))
+
     dics = load_dictionary()
 
     results = crack(entries, dics,4)
